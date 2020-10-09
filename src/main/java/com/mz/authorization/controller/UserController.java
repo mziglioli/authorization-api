@@ -21,7 +21,7 @@ public class UserController {
 
   private final UserService service;
 
-  @PostMapping("/start")
+  @PostMapping("/check")
   public Mono<User> findUser(@RequestBody UserForm form) {
 
     log.info("request-find: {}", form);
