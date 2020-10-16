@@ -1,74 +1,48 @@
-package com.bookinggo.web.api.chat.translate.service;
+package com.mz.authorization.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-
-import com.bookinggo.web.api.chat.engine.multilingual.MultilingualAdapter;
-import com.bookinggo.web.api.chat.engine.multilingual.MultilingualResponse;
-import com.bookinggo.web.api.chat.template.TemplateTestBase;
-import com.bookinggo.web.api.chat.translate.dto.TranslateForm;
-import com.bookinggo.web.api.chat.translate.dto.TranslateResponse;
+import com.mz.authorization.form.UserForm;
+import com.mz.authorization.model.User;
+import com.mz.authorization.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import reactor.core.publisher.Mono;
 
-class TranslateServiceTest extends TemplateTestBase {
+import java.util.Optional;
 
-  @SpyBean private TranslateService service;
-  @MockBean private MultilingualAdapter multilingualAdapter;
+import static com.mz.authorization.config.TestUtils.USER_EMAIL;
+import static com.mz.authorization.config.TestUtils.USER_PASSWORD;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.BDDMockito.given;
 
-  @Test
-  @DisplayName("Testing buildResponse")
-  void test_buildResponse() throws Exception {
-    mock();
-    TranslateForm form =
-        TranslateForm.builder().from("en").to("es").text("Hello 12:10:00 PM").build();
-    MultilingualResponse response = MultilingualResponse.builder().translation("Hola").build();
+@SpringBootTest
+class UserServiceTest {
 
-    // with time
-    TranslateResponse result = service.buildResponse(form, response);
-    assertEquals("Hola 12:10:00 PM", result.getTranslatedText());
-
-    // with time and extra spaces at the end
-    form.setText("Hello 12:10:00 PM   ");
-    assertEquals("Hola 12:10:00 PM", result.getTranslatedText());
-
-    // without time
-    form.setText("Hello");
-    result = service.buildResponse(form, response);
-    assertEquals("Hola", result.getTranslatedText());
-  }
+  @SpyBean
+  private UserService service;
+  @MockBean
+  private UserRepository repository;
 
   @Test
-  @DisplayName("Testing translate")
-  void test_translate() throws Exception {
+  @DisplayName("given an existing user with email and password exists will return the user")
+  void test__validUser() {
     mock();
-
-    mockTranslate("Hola");
-    String originalText = "Hello 12:10:00 PM";
-    TranslateForm form = TranslateForm.builder().from("en").to("es").text(originalText).build();
-    String text = "Hello";
-    MultilingualResponse multilingualResponse = service.translate(form, text).block();
-    TranslateResponse result = service.buildResponse(form, multilingualResponse);
-    assertEquals("Hola 12:10:00 PM", result.getTranslatedText());
-    assertEquals(originalText, result.getOriginalText());
+    UserForm form = new UserForm(USER_EMAIL, USER_PASSWORD);
+    User user = service.getByCredentials(form).block();
+    assertNotNull(user);
+    assertEquals(USER_PASSWORD, user.getPassword());
+    assertEquals(USER_EMAIL, user.getEmail());
   }
 
-  @Test
-  @DisplayName("Testing getTranslatedText")
-  void test_getTranslatedText() throws Exception {
-    mock();
-    mockTranslate("Hola");
-    String text = "Hello";
-    MultilingualResponse result = service.getTranslatedText("en", "es", text).block();
-    assertEquals("Hola", result.getTranslation());
-  }
-
-  private void mockTranslate(String translatedText) {
-    given(multilingualAdapter.translate(any()))
-        .willReturn(Mono.just(MultilingualResponse.builder().translation(translatedText).build()));
+  private void mock() {
+    given(repository.findUserByEmailAndPassword(USER_EMAIL, USER_PASSWORD))
+        .willReturn(Mono.just(User.builder()
+                .password(USER_PASSWORD)
+                .email(USER_EMAIL)
+                .name("test")
+                .id("123")
+                .build()));
   }
 }

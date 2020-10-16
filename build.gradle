@@ -38,7 +38,8 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
 //    testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
-
+    testAnnotationProcessor "org.projectlombok:lombok"
+    testCompileOnly "org.projectlombok:lombok"
 }
 
 test {
