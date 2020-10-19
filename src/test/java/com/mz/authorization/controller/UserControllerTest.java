@@ -13,10 +13,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import static com.mz.authorization.config.TestUtils.USER_EMAIL;
-import static com.mz.authorization.config.TestUtils.USER_PASSWORD;
+import static com.mz.authorization.config.TestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -42,7 +42,7 @@ class UserControllerTest {
     mock();
     webTestClient
             .post()
-            .uri("/user/check")
+            .uri("/public/user/check")
             .accept(APPLICATION_JSON)
             .bodyValue(form)
             .exchange()
@@ -57,7 +57,7 @@ class UserControllerTest {
     mock();
     User user = webTestClient
             .post()
-            .uri("/user/check")
+            .uri("/public/user/check")
             .accept(APPLICATION_JSON)
             .bodyValue(form)
             .exchange()
@@ -67,13 +67,38 @@ class UserControllerTest {
     assertNull(user);
   }
 
+  @Test
+  @DisplayName("given an authorized header is present then a response is returned")
+  void test__Authorized() {
+    mock();
+    webTestClient
+            .get()
+            .uri("/user/all")
+            .accept(APPLICATION_JSON)
+            .header("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=")
+            .exchange()
+            .expectStatus()
+            .isOk();
+  }
+
+  @Test
+  @DisplayName("given an NOT authorized header is present then an error is throw")
+  void test__notAuthorized() {
+    mock();
+    webTestClient
+            .get()
+            .uri("/user/all")
+            .accept(APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isUnauthorized();
+  }
+
   private void mock() {
+    User user = buildMockUser();
     given(repository.findUserByEmailAndPassword(USER_EMAIL, USER_PASSWORD))
-        .willReturn(Mono.just(User.builder()
-                .password(USER_PASSWORD)
-                .email(USER_EMAIL)
-                .name("test")
-                .id("123")
-                .build()));
+        .willReturn(Mono.just(user));
+    given(repository.findAll())
+        .willReturn(Flux.just(user));
   }
 }
