@@ -1,5 +1,6 @@
 package com.mz.authorization.config;
 
+import com.mz.authorization.form.UserForm;
 import com.mz.authorization.model.User;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,14 @@ public class TestUtils {
                 .email(USER_EMAIL)
                 .name("test")
                 .id("123")
+                .build();
+    }
+    public static User buildMockUser(UserForm form) {
+        return User.builder()
+                .password(form.getPassword())
+                .email(form.getEmail())
+                .name(form.getName())
+                .id(form.getId())
                 .build();
     }
 }

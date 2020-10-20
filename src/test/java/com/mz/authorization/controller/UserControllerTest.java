@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import static com.mz.authorization.config.TestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -38,11 +39,12 @@ class UserControllerTest {
   @Test
   @DisplayName("given an existing user with email and password exists will return the user")
   void test__validUser() {
-    UserForm form = new UserForm(USER_EMAIL, USER_PASSWORD);
+    UserForm form = new UserForm("name", USER_EMAIL, USER_PASSWORD);
     mock();
     webTestClient
             .post()
-            .uri("/public/user/check")
+            .uri("/user/check")
+            .header("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=")
             .accept(APPLICATION_JSON)
             .bodyValue(form)
             .exchange()
@@ -53,18 +55,34 @@ class UserControllerTest {
   @Test
   @DisplayName("given an user does NOT exists with email and password will return the user")
   void test__invalidUserEmail() {
-    UserForm form = new UserForm("usernotexists@email.com", USER_PASSWORD);
-    mock();
-    User user = webTestClient
+    UserForm form = new UserForm("name", "usernotexists@email.com", USER_PASSWORD);
+    mock(form);
+    webTestClient
             .post()
-            .uri("/public/user/check")
+            .uri("/user/check")
             .accept(APPLICATION_JSON)
+            .header("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=")
             .bodyValue(form)
             .exchange()
-            .expectBody(User.class)
-            .returnResult()
-            .getResponseBody();
-    assertNull(user);
+            .expectStatus().isOk()
+            .expectBody().isEmpty();
+  }
+
+  @Test
+  @DisplayName("given a valid form is POST to user will return a 200")
+  void test__createUser() {
+    UserForm form = new UserForm("new user", "newuser@email.com", USER_PASSWORD);
+    mock(form);
+    webTestClient
+            .post()
+            .uri("/user/")
+            .accept(APPLICATION_JSON)
+            .header("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=")
+            .bodyValue(form)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody()
+            .jsonPath("$.name").isEqualTo("new user");
   }
 
   @Test
@@ -96,9 +114,18 @@ class UserControllerTest {
 
   private void mock() {
     User user = buildMockUser();
-    given(repository.findUserByEmailAndPassword(USER_EMAIL, USER_PASSWORD))
-        .willReturn(Mono.just(user));
+    mock(user);
+  }
+  private void mock(UserForm form) {
+    User user = buildMockUser(form);
+    mock(user);
+  }
+  private void mock(User user) {
+    given(repository.findUserByEmailAndPasswordAndActive(USER_EMAIL, USER_PASSWORD, true))
+            .willReturn(Mono.just(user));
     given(repository.findAll())
-        .willReturn(Flux.just(user));
+            .willReturn(Flux.just(user));
+    given(repository.save(any()))
+            .willReturn(Mono.just(user));
   }
 }

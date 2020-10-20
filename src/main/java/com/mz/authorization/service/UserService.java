@@ -1,27 +1,41 @@
 package com.mz.authorization.service;
 
+import com.mz.authorization.config.MongoConfig;
 import com.mz.authorization.form.UserForm;
 import com.mz.authorization.model.User;
 import com.mz.authorization.repository.UserRepository;
-import lombok.AllArgsConstructor;
+import com.mz.authorization.response.UserResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 @Slf4j
-@AllArgsConstructor(onConstructor = @__(@Autowired))
+@Transactional
 @Service
-public class UserService {
+public class UserService extends DefaultService<User, UserRepository, UserForm, UserResponse> {
 
-    private final UserRepository repository;
-
-    public Mono<User> getByCredentials(UserForm form) {
-        return repository.findUserByEmailAndPassword(form.getEmail(), form.getPassword());
+    @Autowired
+    UserService(UserRepository repository) {
+        super(repository);
     }
 
-    public Flux<User> getAll() {
-        return repository.findAll();
+    public Mono<UserResponse> getByCredentials(UserForm form) {
+        return repository.findUserByEmailAndPasswordAndActive(form.getEmail(), form.getPassword(), true)
+                .map(this::convertEntityToResponse);
+    }
+
+    /**
+     * used only in dev by {@link com.mz.authorization.config.MongoConfig}
+     * */
+    public void initiateDb() {
+        repository.deleteAll()
+                .subscribe();
+        save(User.builder()
+                .name("test")
+                .email("test@test.com")
+                .password("test")
+                .build(), "0").subscribe();
     }
 }
