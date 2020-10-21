@@ -30,12 +30,14 @@ public class UserService extends DefaultService<User, UserRepository, UserForm, 
      * used only in dev by {@link com.mz.authorization.config.MongoConfig}
      * */
     public void initiateDb() {
+        log.info("init db");
         repository.deleteAll()
                 .subscribe();
         save(User.builder()
                 .name("test")
                 .email("test@test.com")
                 .password("test")
-                .build(), "0").subscribe();
+                .build(), "0")
+            .subscribe(u -> log.info("user inserted", u));
     }
 }

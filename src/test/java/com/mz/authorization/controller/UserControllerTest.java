@@ -17,7 +17,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static com.mz.authorization.config.TestUtils.*;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -37,8 +36,8 @@ class UserControllerTest {
   private UserRepository repository;
 
   @Test
-  @DisplayName("given an existing user with email and password exists will return the user")
-  void test__validUser() {
+  @DisplayName("given an existing user with email and password exists will return the user auth by admin")
+  void test__validUserWhenAdmin() {
     UserForm form = new UserForm("name", USER_EMAIL, USER_PASSWORD);
     mock();
     webTestClient
@@ -53,10 +52,28 @@ class UserControllerTest {
   }
 
   @Test
+  @DisplayName("given an existing user with email and password exists will return the user auth by user")
+  void test__validUserWhenUser() {
+    UserForm form = new UserForm("name", USER_EMAIL, USER_PASSWORD);
+    mock();
+    webTestClient
+            .post()
+            .uri("/user/check")
+            .header("Authorization", "Basic d2ViOndlYg==")
+            .accept(APPLICATION_JSON)
+            .bodyValue(form)
+            .exchange()
+            .expectStatus()
+            .isOk();
+  }
+
+  @Test
   @DisplayName("given an user does NOT exists with email and password will return the user")
   void test__invalidUserEmail() {
     UserForm form = new UserForm("name", "usernotexists@email.com", USER_PASSWORD);
     mock(form);
+    given(repository.findUserByEmailAndPasswordAndActive(form.getEmail(), form.getPassword(), true))
+            .willReturn(Mono.empty());
     webTestClient
             .post()
             .uri("/user/check")
@@ -98,6 +115,19 @@ class UserControllerTest {
             .expectStatus()
             .isOk();
   }
+  @Test
+  @DisplayName("given an user has NOT enough authority to hit that endpoint then an exception is Forbidden with will be returned")
+  void test__NotEnoughAuth() {
+    mock();
+    webTestClient
+            .get()
+            .uri("/user/all")
+            .accept(APPLICATION_JSON)
+            .header("Authorization", "Basic d2ViOndlYg==")
+            .exchange()
+            .expectStatus()
+            .isForbidden();
+  }
 
   @Test
   @DisplayName("given an NOT authorized header is present then an error is throw")
@@ -121,7 +151,7 @@ class UserControllerTest {
     mock(user);
   }
   private void mock(User user) {
-    given(repository.findUserByEmailAndPasswordAndActive(USER_EMAIL, USER_PASSWORD, true))
+    given(repository.findUserByEmailAndPasswordAndActive(user.getEmail(), user.getPassword(), true))
             .willReturn(Mono.just(user));
     given(repository.findAll())
             .willReturn(Flux.just(user));

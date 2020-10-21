@@ -37,10 +37,14 @@ public class SecurityConfig {
         UserDetails admin = User
                 .withUsername("admin")
                 .password(passwordEncoder().encode("password"))
-                .roles("ADMIN")
+                .roles("ADMIN", "USER")
                 .build();
-
-        return new MapReactiveUserDetailsService(admin);
+        UserDetails web = User
+                .withUsername("web")
+                .password(passwordEncoder().encode("web"))
+                .roles("USER")
+                .build();
+        return new MapReactiveUserDetailsService(admin, web);
     }
 
     @Bean
