@@ -1,6 +1,7 @@
 package com.mz.authorization.controller;
 
 import com.mz.authorization.form.UserForm;
+import com.mz.authorization.response.JwtResponse;
 import com.mz.authorization.response.UserResponse;
 import com.mz.authorization.service.UserService;
 import lombok.AllArgsConstructor;
@@ -22,13 +23,21 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class UserController {
 
   private final UserService service;
-  private final static String LOG_REQUEST = "Request-{}: {}";
+  private static final String LOG_REQUEST = "Request-{}: {}";
+  private static final String LOG_REQUEST_ERROR = "Request-Error-{}: {}";
 
   @PreAuthorize("hasRole('USER')")
-  @PostMapping("/check")
-  public Mono<UserResponse> findUserByForm(@RequestBody UserForm form) {
+  @PostMapping("/authenticate")
+  public Mono<JwtResponse> findUserByForm(@RequestBody UserForm form) {
     log.info(LOG_REQUEST, "find", form);
-    return service.getByCredentials(form);
+    return service.authenticate(form);
+  }
+
+  @PreAuthorize("hasRole('USER')")
+  @GetMapping("/check/{token}")
+  public Mono<UserResponse> checkUserByToken(@PathVariable String token) {
+    log.info(LOG_REQUEST, "check", token);
+    return service.check(token);
   }
 
   @PreAuthorize("hasRole('ADMIN')")

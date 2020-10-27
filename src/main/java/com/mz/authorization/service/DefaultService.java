@@ -22,7 +22,7 @@ public abstract class DefaultService <T extends EntityJpa, R extends ReactiveMon
     }
     protected Response convertEntityToResponse(T entity) {
         if (entity == null) {
-            return null;
+            return (Response) new DefaultResponse("", false);
         }
         return (Response) entity.convert();
     }

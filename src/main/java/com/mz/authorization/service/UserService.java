@@ -4,6 +4,7 @@ import com.mz.authorization.config.MongoConfig;
 import com.mz.authorization.form.UserForm;
 import com.mz.authorization.model.User;
 import com.mz.authorization.repository.UserRepository;
+import com.mz.authorization.response.JwtResponse;
 import com.mz.authorization.response.UserResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,15 +17,34 @@ import reactor.core.publisher.Mono;
 @Service
 public class UserService extends DefaultService<User, UserRepository, UserForm, UserResponse> {
 
+    private SecureService secureService;
+
     @Autowired
-    UserService(UserRepository repository) {
+    UserService(UserRepository repository, SecureService secureService) {
         super(repository);
+        this.secureService = secureService;
     }
 
     public Mono<UserResponse> getByCredentials(UserForm form) {
         return repository.findUserByEmailAndPasswordAndActive(form.getEmail(), form.getPassword(), true)
                 .map(this::convertEntityToResponse);
     }
+
+    public Mono<JwtResponse> authenticate(UserForm form) {
+        return getByCredentials(form)
+                .defaultIfEmpty(UserResponse.builder().build())
+                .map(secureService::createJwtResponse);
+    }
+
+    public Mono<UserResponse> check(String token) {
+        UserResponse user = secureService.detokenise(token);
+        if (user != null) {
+            return repository.findUserByEmailAndActive(user.getEmail(), user.isActive())
+                    .map(this::convertEntityToResponse);
+        }
+        return Mono.empty();
+    }
+
 
     /**
      * used only in dev by {@link com.mz.authorization.config.MongoConfig}

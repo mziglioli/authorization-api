@@ -42,7 +42,7 @@ class UserControllerTest {
     mock();
     webTestClient
             .post()
-            .uri("/user/check")
+            .uri("/user/authenticate")
             .header("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=")
             .accept(APPLICATION_JSON)
             .bodyValue(form)
@@ -58,7 +58,7 @@ class UserControllerTest {
     mock();
     webTestClient
             .post()
-            .uri("/user/check")
+            .uri("/user/authenticate")
             .header("Authorization", "Basic d2ViOndlYg==")
             .accept(APPLICATION_JSON)
             .bodyValue(form)
@@ -76,13 +76,17 @@ class UserControllerTest {
             .willReturn(Mono.empty());
     webTestClient
             .post()
-            .uri("/user/check")
+            .uri("/user/authenticate")
             .accept(APPLICATION_JSON)
             .header("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=")
             .bodyValue(form)
             .exchange()
             .expectStatus().isOk()
-            .expectBody().isEmpty();
+            .expectBody()
+            .jsonPath("$.id").isEmpty()
+            .jsonPath("$.name").isEmpty()
+            .jsonPath("$.email").isEmpty()
+            .jsonPath("$.token").isEmpty();
   }
 
   @Test
