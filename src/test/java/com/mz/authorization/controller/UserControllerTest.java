@@ -90,6 +90,31 @@ class UserControllerTest {
   }
 
   @Test
+  @DisplayName("given an form is not valid them will return 400 BadRequest")
+  void test__invalidUserForm() {
+    // empty email
+    UserForm form = new UserForm("name", "", USER_PASSWORD);
+    webTestClient
+            .post()
+            .uri("/user/authenticate")
+            .accept(APPLICATION_JSON)
+            .header("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=")
+            .bodyValue(form)
+            .exchange()
+            .expectStatus().isBadRequest();
+
+    form = new UserForm("", "valid@email.com", "");
+    webTestClient
+            .post()
+            .uri("/user/authenticate")
+            .accept(APPLICATION_JSON)
+            .header("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=")
+            .bodyValue(form)
+            .exchange()
+            .expectStatus().isBadRequest();
+  }
+
+  @Test
   @DisplayName("given a valid form is POST to user will return a 200")
   void test__createUser() {
     UserForm form = new UserForm("new user", "newuser@email.com", USER_PASSWORD);

@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
+
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -28,7 +30,7 @@ public class UserController {
 
   @PreAuthorize("hasRole('USER')")
   @PostMapping("/authenticate")
-  public Mono<JwtResponse> findUserByForm(@RequestBody UserForm form) {
+  public Mono<JwtResponse> findUserByForm(@Valid @RequestBody UserForm form) {
     log.info(LOG_REQUEST, "find", form);
     return service.authenticate(form);
   }
@@ -43,7 +45,7 @@ public class UserController {
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping("/")
   @ResponseStatus(HttpStatus.OK)
-  public Mono<UserResponse> add(@RequestBody UserForm form) {
+  public Mono<UserResponse> add(@Valid @RequestBody UserForm form) {
     log.info(LOG_REQUEST, "add", form);
     return service.add(form);
   }
@@ -51,13 +53,19 @@ public class UserController {
   @PreAuthorize("hasRole('ADMIN')")
   @PutMapping("/{id}")
   @ResponseStatus(HttpStatus.OK)
-  public Mono<UserResponse> update(@PathVariable String id, @RequestBody UserForm form) {
+  public Mono<UserResponse> update(@PathVariable String id, @Valid @RequestBody Mono<UserForm> form) {
     log.info(LOG_REQUEST, "update", id);
-    if(isBlank(id) || isBlank(form.getId()) || !id.equals(form.getId())) {
-      // TODO
-      throw new RuntimeException("Invalid id to update");
-    }
-    return service.update(form);
+
+    return form.flatMap(userForm -> {
+      if(isBlank(id) || isBlank(userForm.getId()) || !id.equals(userForm.getId())) {
+        return Mono.error(new RuntimeException("Invalid id to update"));
+      } else {
+        return service.update(userForm);
+      }
+    }).onErrorResume(throwable -> {
+      log.error("test", throwable);
+      return Mono.error(new RuntimeException("Invalid id to update"));
+    });
   }
 
   @PreAuthorize("hasRole('ADMIN')")

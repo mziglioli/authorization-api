@@ -29,10 +29,10 @@ class UserServiceTest {
   @DisplayName("given an existing user with email and password exists will return the user")
   void test__validUser() {
     mock();
-    UserForm form = new UserForm("name", USER_EMAIL, USER_PASSWORD);
+    UserForm form = new UserForm("test", USER_EMAIL, USER_PASSWORD);
     UserResponse user = service.getByCredentials(form).block();
     assertNotNull(user);
-    assertEquals("name", user.getName());
+    assertEquals("test", user.getName());
     assertEquals(USER_EMAIL, user.getEmail());
   }
 

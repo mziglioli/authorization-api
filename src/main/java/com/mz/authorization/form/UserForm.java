@@ -1,17 +1,16 @@
 package com.mz.authorization.form;
 
 import com.mz.authorization.model.User;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.validation.constraints.NotEmpty;
 
+@ToString
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
 public class UserForm extends DefaultForm{
-    @NotEmpty(message = "validator.invalid.name")
     private String name;
     @NotEmpty(message = "validator.invalid.email")
     private String email;
