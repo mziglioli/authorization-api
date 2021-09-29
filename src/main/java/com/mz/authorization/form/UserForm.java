@@ -16,6 +16,7 @@ public class UserForm extends DefaultForm{
     private String email;
     @NotEmpty(message = "validator.invalid.password")
     private String password;
+    private String secret;
 
     @Override
     public User convertToEntity() {

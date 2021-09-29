@@ -3,12 +3,14 @@ package com.mz.authorization.service;
 import com.mz.authorization.form.DefaultForm;
 import com.mz.authorization.model.EntityJpa;
 import com.mz.authorization.response.DefaultResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 public abstract class DefaultService <T extends EntityJpa, R extends ReactiveMongoRepository<T, String>, F extends DefaultForm, Response extends DefaultResponse> {
 
     protected R repository;
@@ -43,6 +45,12 @@ public abstract class DefaultService <T extends EntityJpa, R extends ReactiveMon
     Mono<T> update(T entity, String userId) {
         beforeUpdate(entity, userId);
         return repository.save(entity);
+    }
+
+    void awaitUpdate(T entity, String userId) {
+        beforeUpdate(entity, userId);
+        repository.save(entity)
+                .subscribe(u -> log.info("user updated", u));
     }
 
     Mono<T> delete(T entity, String userId) {

@@ -20,6 +20,19 @@ public class User extends EntityJpa {
     private String name;
     private String email;
     private String password;
+    private String secret;
+    private int loginAttempt;
+
+
+    @Transient
+    public void incrementAttempt() {
+        this.loginAttempt = this.loginAttempt + 1;
+    }
+    @Transient
+    public void initLogin() {
+        this.loginAttempt = 0;
+        this.secret = "";
+    }
 
     @Transient
     @Override
@@ -29,6 +42,7 @@ public class User extends EntityJpa {
                 .email(email)
                 .name(name)
                 .active(active)
+                .loginAttempt(loginAttempt)
                 .build();
     }
 }

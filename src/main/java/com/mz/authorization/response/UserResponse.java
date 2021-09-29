@@ -11,12 +11,14 @@ public class UserResponse extends DefaultResponse {
 
     private String name;
     private String email;
+    private int loginAttempt;
 
     @Builder
-    public UserResponse(String id, String name, String email, boolean active) {
+    public UserResponse(String id, String name, String email, boolean active, int loginAttempt) {
         super(id, active);
         this.email = email;
         this.name = name;
+        this.loginAttempt = loginAttempt;
     }
 
     @JsonIgnore
