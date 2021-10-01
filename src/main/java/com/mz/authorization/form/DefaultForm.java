@@ -15,5 +15,7 @@ public abstract class DefaultForm {
     String id;
     boolean active;
 
-	public abstract EntityJpa convertToEntity();
+	public EntityJpa convertToEntity() {
+	    return null;
+    }
 }

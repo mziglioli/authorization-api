@@ -47,6 +47,15 @@ public abstract class DefaultService <T extends EntityJpa, R extends ReactiveMon
         return repository.save(entity);
     }
 
+    void awaitSave(T entity, String userId) {
+        if (null != entity.getId()) {
+            awaitUpdate(entity, userId);
+        } else {
+            beforeInsert(entity, userId);
+            repository.save(entity)
+                    .subscribe(u -> log.info("user saved", u));
+        }
+    }
     void awaitUpdate(T entity, String userId) {
         beforeUpdate(entity, userId);
         repository.save(entity)

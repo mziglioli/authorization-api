@@ -42,7 +42,7 @@ public class UserController {
     return service.check(token);
   }
 
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasRole('USER')")
   @PostMapping("/")
   @ResponseStatus(HttpStatus.OK)
   public Mono<UserResponse> add(@Valid @RequestBody UserForm form) {

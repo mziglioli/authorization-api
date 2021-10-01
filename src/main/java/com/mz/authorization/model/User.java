@@ -1,5 +1,6 @@
 package com.mz.authorization.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mz.authorization.response.DefaultResponse;
 import com.mz.authorization.response.UserResponse;
 import lombok.*;
@@ -9,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
 @Setter
+@ToString(of = {"id", "name", "initials", "email", "loginAttempt"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -18,6 +20,7 @@ public class User extends EntityJpa {
     @Id
     private String id;
     private String name;
+    private String initials;
     private String email;
     private String password;
     private String secret;

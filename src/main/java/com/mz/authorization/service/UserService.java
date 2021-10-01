@@ -1,10 +1,8 @@
 package com.mz.authorization.service;
 
-import com.mz.authorization.config.MongoConfig;
 import com.mz.authorization.form.UserForm;
 import com.mz.authorization.model.User;
 import com.mz.authorization.repository.UserRepository;
-import com.mz.authorization.response.DefaultResponse;
 import com.mz.authorization.response.JwtResponse;
 import com.mz.authorization.response.UserResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -13,8 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
-
-import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 @Slf4j
 @Transactional
@@ -29,7 +25,7 @@ public class UserService extends DefaultService<User, UserRepository, UserForm, 
         this.secureService = secureService;
     }
 
-    public Mono<DefaultResponse> getByCredentials(UserForm form) {
+    public Mono<UserResponse> getByCredentials(UserForm form) {
         return repository.findUserByEmailAndPasswordAndActive(form.getEmail(), form.getPassword(), true)
                 .map(this::convertEntityToResponse);
     }
@@ -42,8 +38,12 @@ public class UserService extends DefaultService<User, UserRepository, UserForm, 
         return secureService.createJwtResponse(convertEntityToResponse(user));
     }
 
+    public Mono<User> findByEmail(String email) {
+        return repository.findUserByEmailAndActive(email, true).defaultIfEmpty(new User());
+    }
+
     public Mono<JwtResponse> authenticate(UserForm form) {
-        return repository.findUserByEmailAndActive(form.getEmail(), true)
+        return findByEmail(form.getEmail())
             .map(user -> {
                 if (user.getLoginAttempt() <= 3) {
                     if (form.getPassword().equals(user.getPassword())) {
@@ -74,12 +74,11 @@ public class UserService extends DefaultService<User, UserRepository, UserForm, 
     public Mono<UserResponse> check(String token) {
         UserResponse user = secureService.detokenise(token);
         if (user != null) {
-            return repository.findUserByEmailAndActive(user.getEmail(), user.isActive())
+            return findByEmail(user.getEmail())
                     .map(this::convertEntityToResponse);
         }
         return Mono.empty();
     }
-
 
     /**
      * used only in dev by {@link com.mz.authorization.config.MongoConfig}

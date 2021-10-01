@@ -38,7 +38,7 @@ class UserControllerTest {
   @Test
   @DisplayName("given an existing user with email and password exists will return the user auth by admin")
   void test__validUserWhenAdmin() {
-    UserForm form = new UserForm("name", USER_EMAIL, USER_PASSWORD);
+    UserForm form = new UserForm("name", "TE", USER_EMAIL, USER_PASSWORD, "1234");
     mock();
     webTestClient
             .post()
@@ -54,7 +54,7 @@ class UserControllerTest {
   @Test
   @DisplayName("given an existing user with email and password exists will return the user auth by user")
   void test__validUserWhenUser() {
-    UserForm form = new UserForm("name", USER_EMAIL, USER_PASSWORD);
+    UserForm form = new UserForm("name", "TE", USER_EMAIL, USER_PASSWORD, "1234");
     mock();
     webTestClient
             .post()
@@ -70,9 +70,9 @@ class UserControllerTest {
   @Test
   @DisplayName("given an user does NOT exists with email and password will return the user")
   void test__invalidUserEmail() {
-    UserForm form = new UserForm("name", "usernotexists@email.com", USER_PASSWORD);
+    UserForm form = new UserForm("name", "TE" ,"usernotexists@email.com", USER_PASSWORD, "");
     mock(form);
-    given(repository.findUserByEmailAndPasswordAndActive(form.getEmail(), form.getPassword(), true))
+    given(repository.findUserByEmailAndActive(form.getEmail(), true))
             .willReturn(Mono.empty());
     webTestClient
             .post()
@@ -93,7 +93,7 @@ class UserControllerTest {
   @DisplayName("given an form is not valid them will return 400 BadRequest")
   void test__invalidUserForm() {
     // empty email
-    UserForm form = new UserForm("name", "", USER_PASSWORD);
+    UserForm form = new UserForm("name", "NM", "", USER_PASSWORD, "");
     webTestClient
             .post()
             .uri("/user/authenticate")
@@ -103,7 +103,7 @@ class UserControllerTest {
             .exchange()
             .expectStatus().isBadRequest();
 
-    form = new UserForm("", "valid@email.com", "");
+    form = new UserForm("", "", "valid@email.com", "", "");
     webTestClient
             .post()
             .uri("/user/authenticate")
@@ -117,7 +117,7 @@ class UserControllerTest {
   @Test
   @DisplayName("given a valid form is POST to user will return a 200")
   void test__createUser() {
-    UserForm form = new UserForm("new user", "newuser@email.com", USER_PASSWORD);
+    UserForm form = new UserForm("new user", "NU", "newuser@email.com", USER_PASSWORD, "");
     mock(form);
     webTestClient
             .post()
@@ -180,7 +180,7 @@ class UserControllerTest {
     mock(user);
   }
   private void mock(User user) {
-    given(repository.findUserByEmailAndPasswordAndActive(user.getEmail(), user.getPassword(), true))
+    given(repository.findUserByEmailAndActive(user.getEmail(), true))
             .willReturn(Mono.just(user));
     given(repository.findAll())
             .willReturn(Flux.just(user));
